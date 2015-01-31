@@ -1,0 +1,77 @@
+\documentclass{article}
+\usepackage[utf8]{vietnam}
+\title{\textbf{\Huge{BÀI TẬP VỀ NHÀ\\\Large{\textsc{KĨ THUẬT LẬP TRÌNH}}}}}
+\author{Phạm Văn Thông\\MSSV: 20136495}
+\date{}
+\begin{document}
+
+\maketitle
+\begin{center} 
+\date{\today}
+\end{center}
+
+\section{Cấp phát động trong C và C++}
+
+Trong lập trình thường xuyên phải làm việc với các mảng.Trong nhiều trường hợp, số lượng các phần tử của mảng là không biết trước, việc cấp phát tĩnh cho mảng thông qua khai báo ban đầu thường dẫn tới những trường hợp như không gian để lưu trữ dữ liệu hoặc dư thừa tài nguyên, chiếm dụng bộ nhớ của hệ thống. Giải pháp cho vấn đề này chính là cấp phát động. 
+
+\subsection{Cấp phát động trong C}
+
+Trong C, ta có thể cấp phát động cho biến con trỏ bằng các hàm \texttt{malloc()}, \texttt{calloc()}, \texttt{realloc()} và giải phóng vùng nhớ được cấp phát động bằng hàm \texttt{free()}. Để sử dụng các hàm này phải khai báo tệp tiêu đề \texttt{stdlib.h}.
+
+Cách sử dụng các hàm trên như sau:
+\begin{description}
+\item [malloc] \texttt{void* malloc(size\_t size)}\\Hàm \texttt{malloc()} cấp phát (allocate) một vùng nhớ có kích thước \texttt{size} bytes và trả về con trỏ kiểu \texttt{void*} trỏ tới vùng nhớ được cấp phát. Vùng nhớ được cấp phát chưa được khởi tạo, nghĩa là \emph{giá trị các byte nhớ trong vùng nhớ đó hoàn toàn là ngẫu nhiên}. Nếu giá trị của \texttt{size} là 0, hàm \texttt{malloc()} sẽ trả về \texttt{NULL} hoặc một con trỏ đặc biệt (unique pointer) có thể làm tham số cho hàm \texttt{free()}. Trả về \texttt{NULL} nếu thất bại.
+
+\item[calloc] \texttt{void* calloc(size\_t nmemb, size\_t size)}\\Hàm \texttt{calloc()} cấp phát cho một mảng \texttt{nmemb} phần tử, mỗi phần tử có kích thước \texttt{size} bytes và trả về con trỏ tới vùng nhớ đã được cấp phát. Chú ý rằng khi cấp phát bằng hàm calloc, \emph{giá trị các bytes nhớ sẽ được đặt là 0}. Tương tự như \texttt{malloc()}, nếu \texttt{nmemb} hoặc \texttt{size} là 0, thì hàm \texttt{calloc()} sẽ trả về hoặc là \texttt{NULL}, hoặc một con trỏ đặc biệt có thể làm tham số cho hàm \texttt{free()}.
+
+\item[realloc] \texttt{void* realloc(void *ptr, size\_t size)}\\Hàm \texttt{realloc()} thay đổi kích thước của khối nhớ được trỏ bởi \texttt{*ptr} thành \texttt{size} bytes. Nội dung của khối nhớ sẽ không thay đổi. Nếu kích thước mới lơn hơn kích thước ban đầu, phần khối nhớ thêm vào sẽ \emph{không có giá trị xác định}. Nếu \texttt{ptr} là \texttt{NULL} thì hàm sẽ tương tự như sử dụng với hàm \texttt{malloc(size)}, với mọi giá trị bất kì của \texttt{size}. Nếu \texttt{size} là 0, và \texttt{ptr} không phải là \texttt{NULL}, thì lời gọi hàm sẽ tương đương với việc sử dụng hàm \texttt{free(ptr)}. Hàm trả về con trỏ tới khối nhớ vừa được cấp phát mới, hoặc \texttt{NULL} nếu thất bại. Nếu thất bại, khối nhớ sẽ không bị thay đổi (giải phóng hoặc di chuyển).
+
+\item [free] \texttt{void free(void *ptr)}\\ Hàm \texttt{free()} giải phóng vùng nhớ được trỏ bởi \texttt{ptr}, \texttt{ptr} \emph{phải là con trỏ được trả về từ các hàm \texttt{malloc()}, \texttt{calloc()}, hoặc \texttt{realloc()}}. Trong những trường hợp khác, hoặc \texttt{free(ptr)} đã được gọi từ trước thì sẽ có những lỗi không xác định \footnote{undefined behavior} xảy ra. Nếu \texttt{ptr} là \texttt{NULL} thì không có thao tác nào được thực hiện.
+\end{description}
+
+\textbf{Một số lưu ý: }
+\begin{itemize}
+\item Khối nhớ được cấp phát từ hàm \texttt{malloc()} chưa được khởi tạo, các giá trị của nó là chưa xác định.
+\item Khối nhớ được cấp phát từ hàm \texttt{calloc()} thì các bytes nhớ của khối được đặt về 0.
+\item Với hàm \texttt{free()}, chỉ có thể hoạt động khi giá trị của con trỏ làm tham số cho nó là giá trị được trả về từ các hàm \texttt{malloc()}, \texttt{calloc()} và \texttt{realloc()}. Nếu vì một nguyên nhân nào đó mà các giá trị truyền vào cho free không phải là giá trị này thì sẽ gây ra lỗi. Ví dụ đoạn chương trình sau sẽ gây lỗi:
+
+\begin{verbatim}
+int *p;
+p = malloc(10 * sizeof(int));
+p++;
+free(p);
+\end{verbatim}
+
+Vì vậy khi lập trình phải chú ý với những con trỏ quản lý các khối nhớ được cấp phát động.
+\item Các khối nhớ được cấp phát nên được giải phóng khi không cần sử dụng đến. Trước khi kết thúc chương trình nên giải phóng hết các bộ nhớ, nếu không có thể gây ra hiện tượng rác.
+
+\item Khi sử dụng các hàm \texttt{malloc()}, \texttt{calloc()} và \texttt{realloc()} không nên ép kiểu, việc ép kiểu có thể dẫn đến gây lỗi nhưng trình dịch không thông báo trong trường hợp không \texttt{include} thành công thư viện \texttt{stdlib}.
+\end{itemize}
+\newpage
+\subsection{Cấp phát động trong C++}
+Trong C++ sử dụng các toán tử \texttt{new} và \texttt{delete} dùng cho việc cấp phát và giải phóng bộ nhớ. Việc cấp phát và giải phóng bộ nhớ sử dụng các toán tử \texttt{new} và \texttt{delete} rất đơn giản.
+
+Các cú pháp sử dụng các toán tử \texttt{new} và \texttt{delete} như sau:
+\begin{itemize}
+\item Cấp phát bộ nhớ \\ \texttt{<tên con trỏ> = new <kiểu con trỏ>}
+\item Cấp phát cho mảng\\ \texttt{<tên con trỏ> = new <kiểu con trỏ>[số phần tử]}
+\item Giải phóng bộ nhớ\\ \texttt{delete <tên con trỏ>}
+\item Giải phóng bộ nhớ cho mảng\\ \texttt{delete [] <tên con trỏ>}
+\end{itemize}
+
+Toán tử \texttt{new} sẽ gọi tới hàm dựng lớp.
+
+\subsection{Một số sự khác biệt giữa \texttt{new}, \texttt{delete} so với \texttt{malloc} và \texttt{free}}
+
+Các hàm như \texttt{malloc()} và \texttt{free()} so với các toán tử \texttt{new} và \texttt{delete} tuy cùng được sử dụng để cấp phát động trong lập trình C/C++ nhưng giữa chúng có nhiều điểm khác nhau.
+
+\begin{itemize}
+\item \texttt{new} và \texttt{delete} chỉ dùng được trong C++, \texttt{malloc()} và \texttt{free()} dùng được trong cả C và C++
+\item \texttt{new} là toán tử, có thể \emph{overload operator} còn \texttt{malloc()} là hàm
+\item \texttt{new} trả về con trỏ của loại dữ liệu, còn \texttt{malloc()} trả về con trỏ \texttt{void}
+\item \texttt{new} gọi hàm dựng lớp
+\item Khi gặp vấn đề, \texttt{new} quăng ra lỗi (\texttt{throw exception}), còn \texttt{malloc()} chỉ trả về \texttt{NULL}
+\item Khi giải phóng \texttt{new} phải sử dụng \texttt{delete}, khi giải phóng \texttt{malloc()} phải sử dụng \texttt{free()}
+
+\end{itemize}
+\end{document}
